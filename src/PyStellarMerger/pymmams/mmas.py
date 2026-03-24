@@ -244,12 +244,13 @@ class mmas:
 
         return energy_p + energy_ej - params.e_tot
 
-    def merge_stars_consistently(self, n_shells, flag_do_shock_heating, mass_loss_flag, mass_loss_fraction, output_folder, f_heat_factor, sh_extrapolation, initial_buoyancy, final_buoyancy, **kwargs):
+    def merge_stars_consistently(self, n_shells, flag_do_shock_heating, mass_loss_flag, mass_loss_fraction, mass_loss_fraction_factor, output_folder, f_heat_factor, sh_extrapolation, initial_buoyancy, final_buoyancy, **kwargs):
         """
         n_shells: Number of shells the unmixed merger product should roughly have.
         flag_do_shock_heating: Flag to enable or disable shock heating.
         mass_loss_flag: Flag to enable or disable constant mass loss.
         mass_loss_fraction: If mass_loss_flag is set to False, use this fraction of the total mass as mass loss.
+        mass_loss_fraction_factor: If mass_loss_flag is set to True, then scale the mass loss by this factor.
         output_folder: Folder to save the buoyancy profiles before and after shock heating to.
         f_heat_factor: Factor to scale the shock heating by.
         sh_extrapolation: Flag to enable or disable extrapolation of shock heating parameters.
@@ -266,7 +267,7 @@ class mmas:
             self.model_a.write_basic(os.path.join(output_folder, "primary_initial_buoyancy.txt"))
             self.model_b.write_basic(os.path.join(output_folder, "secondary_initial_buoyancy.txt"))
 
-        f_lost = mass_loss(self.model_a.star_mass, self.model_b.star_mass, mass_loss_flag, mass_loss_fraction) / 100.0
+        f_lost = mass_loss(self.model_a.star_mass, self.model_b.star_mass, mass_loss_flag, mass_loss_fraction, mass_loss_fraction_factor) / 100.0
         m_ejecta = (self.model_a.star_mass + self.model_b.star_mass) * f_lost
 
         energy_a = compute_stellar_energy(self.model_a)

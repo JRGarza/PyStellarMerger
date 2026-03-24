@@ -1,4 +1,4 @@
-def mass_loss(mass_a, mass_b, do_const=False, const_mass_loss=0.1):
+def mass_loss(mass_a, mass_b, do_const=False, const_mass_loss=0.1, mlmass_loss_fraction_factor_factor = 1.0):
     """
     mass_a = Mass of star a
     mass_b = Mass of star b
@@ -14,7 +14,7 @@ def mass_loss(mass_a, mass_b, do_const=False, const_mass_loss=0.1):
     if do_const:
         f_ml = 100 * const_mass_loss
     else:
-        f_ml = 8.36 * q ** (-2.58) * (2 * q / (1 + q)) ** 4.28
+        f_ml = mlmass_loss_fraction_factor_factor * 8.36 * q ** (-2.58) * (2 * q / (1 + q)) ** 4.28
 
     print(f"f_ml = {f_ml}")
 

@@ -63,6 +63,7 @@ class StellarMerger:
                 'chemical_species': ['h1', 'he3', 'he4', 'c12', 'n14', 'o16'],
                 'fill_missing_species': False,
                 'massloss_fraction': -1.0, 
+                'massloss_fraction_factor': -1.0, 
                 'output_dir': '', 
                 'output_diagnostics': True
                 }
@@ -89,6 +90,9 @@ class StellarMerger:
         if not (isinstance(self.parameters["massloss_fraction"], float), isinstance(self.parameters["massloss_fraction"], int)) or self.parameters["massloss_fraction"] >= 1.0:
             raise ValueError("massloss_fraction must be < 1.0.")
         
+        if not (isinstance(self.parameters["massloss_fraction_factor"], float), isinstance(self.parameters["massloss_fraction_factor"], int)) or self.parameters["massloss_fraction_factor"] < 0.0:
+            raise ValueError("massloss_fraction_factor must be > 0.0.")
+        
         # Set the mass loss behavior
         if self.parameters["massloss_fraction"] < 0:
             self.parameters["mass_loss_flag"] = False # If massloss_fraction is negative, disable constant mass loss and use the inbuilt mass loss prescription
@@ -101,7 +105,7 @@ class StellarMerger:
 
     def PyMMAMS(self):
         merger = mmas(self.model_a, self.model_b)
-        self.model_remnant = merger.merge_stars_consistently(self.parameters["n_target_shells"], self.parameters["enable_shock_heating"], self.parameters["mass_loss_flag"], self.parameters["mass_loss_fraction"], self.parameters["output_dir"], self.parameters["f_mod"], self.parameters["extrapolate_shock_heating"], self.parameters["initial_buoyancy"], self.parameters["final_buoyancy"])
+        self.model_remnant = merger.merge_stars_consistently(self.parameters["n_target_shells"], self.parameters["enable_shock_heating"], self.parameters["mass_loss_flag"], self.parameters["mass_loss_fraction"], self.parameters["massloss_fraction_factor"], self.parameters["output_dir"], self.parameters["f_mod"], self.parameters["extrapolate_shock_heating"], self.parameters["initial_buoyancy"], self.parameters["final_buoyancy"])
 
         # Compute the total energy of the progenitors and the remnant
         energy_a = compute_stellar_energy(self.model_a)
@@ -113,7 +117,7 @@ class StellarMerger:
 
         de = (energy_p - (energy_a + energy_b)) / (energy_a + energy_b)
         try:
-            de *= 1.0 / (mass_loss(self.model_a.star_mass, self.model_b.star_mass, self.parameters["mass_loss_flag"], self.parameters["mass_loss_fraction"]) / 100.0)
+            de *= 1.0 / (mass_loss(self.model_a.star_mass, self.model_b.star_mass, self.parameters["mass_loss_flag"], self.parameters["mass_loss_fraction"], self.parameters["massloss_fraction_factor"]) / 100.0)
             print(f"de = {de}")
         except ZeroDivisionError: 
             print(f"Zero mass loss assumed, can't compute de.")

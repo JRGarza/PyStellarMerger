@@ -35,7 +35,8 @@ def read_input(infile):
             'final_buoyancy': False, 
             'chemical_species': ['h1', 'he3', 'he4', 'c12', 'n14', 'o16'],
             'fill_missing_species': False,
-            'massloss_fraction': -1.0, 
+            'massloss_fraction': -1.0,
+            'massloss_fraction_factor': 1.0, 
             'output_dir': '', 
             'output_diagnostics': True
             }
@@ -61,6 +62,11 @@ def read_input(infile):
     
     if not (isinstance(parameters["massloss_fraction"], float), isinstance(parameters["massloss_fraction"], int)) or parameters["massloss_fraction"] >= 1.0:
         raise ValueError("massloss_fraction must be < 1.0.")
+    
+    if not (isinstance(parameters["massloss_fraction_factor"], float), isinstance(parameters["massloss_fraction_factor"], int)) or parameters["massloss_fraction_factor"] < 0.0:
+        raise ValueError("massloss_fraction_factor must be > 0.0.")
+    
+
     
     return parameters
 
@@ -93,9 +99,11 @@ def main():
     if parameters["massloss_fraction"] < 0:
         mass_loss_flag = False # If massloss_fraction is negative, disable constant mass loss and use the inbuilt mass loss prescription
         mass_loss_fraction = 0.0 # Has no effect, as inbuilt prescription will be used
+        mass_loss_fraction_factor = float(parameters["massloss_fraction_factor"])
     else:
         mass_loss_flag = True
         mass_loss_fraction = float(parameters["massloss_fraction"])
+        mass_loss_fraction_factor = float(parameters["massloss_fraction_factor"])
 
     sh_extrapolation = parameters["extrapolate_shock_heating"]
     initial_buoyancy = parameters["initial_buoyancy"]
@@ -137,6 +145,7 @@ def main():
     print(f"Constant mass loss: {mass_loss_flag}")
     if mass_loss_flag:
         print(f"Mass loss fraction: {mass_loss_fraction}")
+        print(f"Mass loss fraction factor: {mass_loss_fraction_factor}")
     print(f"Perform shock-heating: {shock_heating_flag}")
     print(f"Shock heating factor: {f_heat_factor}")
     print(f"Generate relaxation profiles: {relaxation_profiles}")
@@ -173,7 +182,7 @@ def main():
 
     # Initialize a merger object and merge the stars
     merger = mmas.mmas(model_a, model_b, r_p, v_inf)
-    model_p = merger.merge_stars_consistently(n_shells, shock_heating_flag, mass_loss_flag, mass_loss_fraction, output_folder, f_heat_factor, sh_extrapolation, initial_buoyancy, final_buoyancy)
+    model_p = merger.merge_stars_consistently(n_shells, shock_heating_flag, mass_loss_flag, mass_loss_fraction, mass_loss_fraction_factor, output_folder, f_heat_factor, sh_extrapolation, initial_buoyancy, final_buoyancy)
 
     # Print the total energy in the progenitors and the product
     energy_a = compute_stellar_energy(model_a)
@@ -186,7 +195,7 @@ def main():
     # Calculate and print the relative energy difference between the progenitors and the product, scaled with 1/(fractional mass loss). Not output when mass_loss_fractio = 0.
     de = (energy_p - (energy_a + energy_b)) / (energy_a + energy_b)
     try:
-        de *= 1.0 / (mass_loss(model_a.star_mass, model_b.star_mass, mass_loss_flag, mass_loss_fraction) / 100.0)
+        de *= 1.0 / (mass_loss(model_a.star_mass, model_b.star_mass, mass_loss_flag, mass_loss_fraction, mass_loss_fraction_factor) / 100.0)
         print(f"de = {de}")
     except ZeroDivisionError: 
         print(f"Zero mass loss assumed, can't compute de.")
@@ -239,8 +248,9 @@ def main():
             f.write(f"Constant mass loss: {mass_loss_flag}\n")
             if mass_loss_flag:
                 f.write(f"Mass loss fraction: {mass_loss_fraction}\n")
+                f.write(f"Mass loss fraction: {mass_loss_fraction_factor}\n")
             else:
-                f.write(f"Mass loss fraction: {mass_loss(model_a.star_mass, model_b.star_mass, mass_loss_flag, mass_loss_fraction) / 100.0}\n")
+                f.write(f"Mass loss fraction: {mass_loss(model_a.star_mass, model_b.star_mass, mass_loss_flag, mass_loss_fraction, mass_loss_fraction_factor) / 100.0}\n")
             f.write(f"Generate relaxation profiles: {relaxation_profiles}\n")
             f.write(f"Output folder: {output_folder}\n")
             f.write(f"Time taken: {t_min:02}:{t_sec:02} minutes\n")
